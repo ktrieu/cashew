@@ -66,3 +66,7 @@ node_modules/
 
 # build output
 dist/
+
+#scratch folder for inkscape work
+map_scratch
+
