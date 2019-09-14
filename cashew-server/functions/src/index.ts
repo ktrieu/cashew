@@ -28,3 +28,13 @@ export const stationUpdate = functions.https.onRequest(async (request, response)
     await ref.update(station);
     response.json(ref.toJSON());
 })
+
+export const getStation = functions.https.onRequest(async (request, response) => {
+    let snapshot = await admin.database().ref('stations').child(request.query.id).once('value');
+    response.json(snapshot.val());
+})
+
+export const getAllStations = functions.https.onRequest(async (request, response) => {
+    let snapshot = await admin.database().ref('stations').orderByKey().once('value');
+    response.json(snapshot.val());
+})
