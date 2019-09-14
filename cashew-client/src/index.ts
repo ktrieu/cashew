@@ -1,6 +1,9 @@
 import lobby_map_path from '../asset/lobby_map.svg';
 
+import { Station } from  '../../cashew-common/common';
+
 import * as d3 from 'd3';
+import { min } from 'd3';
 
 function padBBox(bbox: SVGRect, padding: any) : SVGRect {
     let padded = { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height };
@@ -12,15 +15,14 @@ function padBBox(bbox: SVGRect, padding: any) : SVGRect {
   }
 
 function scaleToFit(padded: any, width: number, height: number) : any {
-let scaleX = width / padded.width;
-let scaleY = height / padded.height;
-//take the smallest factor so we don't cut off the larger axis
-let scale = Math.min(scaleX, scaleY);
-return { scale: scale, x: -padded.x, y: -padded.y};
+    let scaleX = width / padded.width;
+    let scaleY = height / padded.height;
+    //take the smallest factor so we don't cut off the larger axis
+    let scale = Math.min(scaleX, scaleY);
+    return { scale: scale, x: -padded.x, y: -padded.y};
 }
 
-window.addEventListener('DOMContentLoaded', e => {
-    let map = d3.select<HTMLDivElement, any>('#map');
+function initSvg(map: d3.Selection<HTMLDivElement, any, any, any>, path: string) {
     let rect = map.node().getBoundingClientRect();
     let width = rect.width;
     let height = rect.height;
@@ -33,10 +35,10 @@ window.addEventListener('DOMContentLoaded', e => {
         svg.style('pointer-events', 'all');
         svg.attr('viewBox', `0 0 ${width} ${height}`);
         let padded = padBBox(g.node().getBBox(), {
-            left: 50,
-            right: 50,
-            top: 50,
-            bottom: 50
+            left: 5,
+            right: 5,
+            top: 5,
+            bottom: 5
         });
         let initTransform = scaleToFit(padded, width, height)
         let zoom = d3.zoom()
@@ -50,6 +52,41 @@ window.addEventListener('DOMContentLoaded', e => {
             .call(zoom)
             .call(zoom.translateTo, initTransform.x, initTransform.y)
             .call(zoom.scaleTo, initTransform.scale)
+        setInterval(() => {
+            getAllStations().then(stations => {
+                //we are getting null values from firebase
+                //whatever
+                stations = stations.filter(station => station != null);
+                mapUpdate(g, stations);
+            })
+        }, 5000);
     });
+}
 
+const serverUrl = 'https://cashew-2dd75.firebaseapp.com';
+
+function getAllStations(): Promise<Station[]> {
+    return d3.json(serverUrl + '/getAllStations').then(json => {
+        return new Promise((resolve, reject) => {
+            resolve(<Station[]>json);
+        })
+    });
+}
+
+function mapUpdate(g: d3.Selection<SVGGElement, any, any, any>, stations: Station[]) {
+    let selection = g.selectAll('circle.station')
+        .data(stations, (d: Station) => d.id.toString());
+    selection.exit()
+        .remove();
+    selection.enter()
+        .append('circle')
+        .attr('class','station')
+        .attr('cx', (d: Station) => d.location.x)
+        .attr('cy', (d: Station) => d.location.y)
+        .attr('r', 1);
+}
+
+window.addEventListener('DOMContentLoaded', e => {
+    let map = d3.select<HTMLDivElement, any>('#map');
+    initSvg(map, lobby_map_path);
 });

@@ -15,7 +15,18 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "headers": [{
+      "source" : "getAllStations",
+      "headers" : [{
+        "key" : "Access-Control-Allow-Origin",
+        "value" : "*"
+      }]
+    }],
     "rewrites": [
+      {
+        "source": "getAllStations",
+        "function": "getAllStations"
+      },
       {
         "source": "**",
         "destination": "/index.html"
