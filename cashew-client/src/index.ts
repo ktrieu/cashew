@@ -34,6 +34,16 @@ function initSvg(map: d3.Selection<HTMLDivElement, any, any, any>, path: string)
         svg.attr('height', height);
         svg.style('pointer-events', 'all');
         svg.attr('viewBox', `0 0 ${width} ${height}`);
+        let radialGradient = svg.append('defs')
+            .append('radialGradient')
+            .attr('id', 'radial-gradient')
+        radialGradient.append('stop')
+            .attr('offset', '0%')
+            .attr('stop-color', 'red')
+        radialGradient.append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#fff")
+            .attr('stop-opacity', 0);
         let padded = padBBox(g.node().getBBox(), {
             left: 5,
             right: 5,
@@ -73,49 +83,32 @@ function getAllStations(): Promise<Station[]> {
     });
 }
 
-let stationsList: Station[];
-
 function mapUpdate(g: d3.Selection<SVGGElement, any, any, any>, stations: Station[]) {
-    stationsList = stations;
-    let selection = g.selectAll('circle.station')
+
+    let selection = g.selectAll('g.station-g')
         .data(stations, (d: Station) => d.id.toString());
     selection.exit()
         .remove();
-    let circleGroup = selection.enter()
-        .append('g');
-    circleGroup
-        .append('circle')
+    selection.selectAll('circle.sound-gradient')
+        .data(stations, (d: Station) => d.id.toString())
+        .transition()
+        .attr('r', (d: Station) => d.sound_level ** 0.6);
+    
+    let enter = selection.enter()
+        .append('g')
+        .attr('class', 'station-g');
+    enter.append('circle')
+        .attr('class', 'sound-gradient')
+        .attr('cx', (d: Station) => d.location.x)
+        .attr('cy', (d: Station) => d.location.y)
+        .attr('r', (d: Station) => d.sound_level ** 0.6);
+    enter.append('circle')
         .attr('class','station')
         .attr('cx', (d: Station) => d.location.x)
         .attr('cy', (d: Station) => d.location.y)
-        .attr('r', 1)
-    circleGroup
-        .each(function(d, i) { 
-            let station = stationsList[i];
-            radar(this, i); 
-        })
+        .attr('r', 1);
 }
 
-function radar(circle: SVGGElement, stationIdx: number) {
-    let station = stationsList[stationIdx];
-    let c = d3.select(circle);
-    let radar = c.append('circle')
-        .attr('class', 'radar')
-        .attr('r', 0)
-        .attr('cx', station.location.x)
-        .attr('cy', station.location.y)
-
-    loop();
-    function loop() {
-        let duration = 1000000 / stationsList[stationIdx].sound_level;
-        radar
-            .attr('r', 0)
-            .transition()
-            .duration(duration)
-            .attr('r', 100)
-            .on('end', loop)
-    }
-}
 
 window.addEventListener('DOMContentLoaded', e => {
     let map = d3.select<HTMLDivElement, any>('#map');
