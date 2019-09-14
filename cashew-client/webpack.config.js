@@ -8,8 +8,17 @@ module.exports = {
         test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/
+      },
+      {
+        test: /\.svg$/,
+        use: 'file-loader',
+        exclude: /node_modules/
       }
     ]
+  },
+  devtool: 'inline-source-map',
+  devServer: {
+    contentBase: "./dist"
   },
   resolve: {
     extensions: [ '.tsx', '.ts', '.js' ]
