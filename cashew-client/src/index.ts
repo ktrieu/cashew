@@ -44,6 +44,10 @@ function initSvg(map: d3.Selection<HTMLDivElement, any, any, any>, path: string)
             .attr("offset", "100%")
             .attr("stop-color", "#fff")
             .attr('stop-opacity', 0);
+        svg.append('clipPath')
+            .attr('id', 'clipPath')
+            .append('use')
+            .attr('href', '#path826');
         let padded = padBBox(g.node().getBBox(), {
             left: 5,
             right: 5,
@@ -96,6 +100,7 @@ function mapUpdate(g: d3.Selection<SVGGElement, any, any, any>, stations: Statio
     
     let enter = selection.enter()
         .append('g')
+        .lower()
         .attr('class', 'station-g');
     enter.append('circle')
         .attr('class', 'sound-gradient')
