@@ -1,24 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 
-export interface Location {
-    x: number,
-    y: number,
-    floor: number
-}
-
-export interface Device {
-    mac_address: number,
-    signal_strength: number,
-}
-
-export interface Station {
-    id: number,
-	location: Location,
-	devices: Device[],
-	sound_level: number,
-	last_updated: number,
-}
+import { Station } from '../../../cashew-common/common';
 
 admin.initializeApp();
 
