@@ -59,7 +59,7 @@ function initSvg(map: d3.Selection<HTMLDivElement, any, any, any>, path: string)
                 stations = stations.filter(station => station != null);
                 mapUpdate(g, stations);
             })
-        }, 5000);
+        }, 1000);
     });
 }
 
@@ -73,17 +73,48 @@ function getAllStations(): Promise<Station[]> {
     });
 }
 
+let stationsList: Station[];
+
 function mapUpdate(g: d3.Selection<SVGGElement, any, any, any>, stations: Station[]) {
+    stationsList = stations;
     let selection = g.selectAll('circle.station')
         .data(stations, (d: Station) => d.id.toString());
     selection.exit()
         .remove();
-    selection.enter()
+    let circleGroup = selection.enter()
+        .append('g');
+    circleGroup
         .append('circle')
         .attr('class','station')
         .attr('cx', (d: Station) => d.location.x)
         .attr('cy', (d: Station) => d.location.y)
-        .attr('r', 1);
+        .attr('r', 1)
+    circleGroup
+        .each(function(d, i) { 
+            let station = stationsList[i];
+            radar(this, i); 
+        })
+}
+
+function radar(circle: SVGGElement, stationIdx: number) {
+    let station = stationsList[stationIdx];
+    let c = d3.select(circle);
+    let radar = c.append('circle')
+        .attr('class', 'radar')
+        .attr('r', 0)
+        .attr('cx', station.location.x)
+        .attr('cy', station.location.y)
+
+    loop();
+    function loop() {
+        let duration = 1000000 / stationsList[stationIdx].sound_level;
+        radar
+            .attr('r', 0)
+            .transition()
+            .duration(duration)
+            .attr('r', 100)
+            .on('end', loop)
+    }
 }
 
 window.addEventListener('DOMContentLoaded', e => {
