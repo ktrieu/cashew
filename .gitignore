@@ -70,3 +70,7 @@ dist/
 #scratch folder for inkscape work
 map_scratch
 
+#public firebase hosted content
+cashew-server/public
+
+
