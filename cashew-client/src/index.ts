@@ -73,7 +73,7 @@ function initSvg(map: d3.Selection<HTMLDivElement, any, any, any>, path: string)
                 stations = stations.filter(station => station != null);
                 mapUpdate(g, stations);
             })
-        }, 1000);
+        }, 500);
     });
 }
 
