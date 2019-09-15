@@ -37,6 +37,11 @@ void setup()
 int soundSum = 0;
 int soundSamples = 0;
 
+// Moving average to smooth sound values
+const int averageLength = 4;
+int pastSound[averageLength];
+int soundIndex = 0;
+
 void loop() {
   if (millis()%500L == 0L){
     transmitSound();
@@ -51,9 +56,17 @@ void updateSound(){
 }
 
 void transmitSound(){
-  int sound = 10 * soundSum/soundSamples;
+  pastSound[soundIndex] =  10 * soundSum/soundSamples;
   soundSum = 0;
   soundSamples = 0;
+  // Moving average
+  soundIndex = (soundIndex + 1) % (averageLength - 1);
+  int sound = 0;
+  for (int i = 0; i < averageLength; i++){
+    sound += pastSound[i];
+  }
+  sound /= averageLength;
+  
   Serial.println(sound);
   HTTPClient http;
   http.begin("http://us-central1-cashew-2dd75.cloudfunctions.net/stationUpdate");
