@@ -5,16 +5,18 @@
 #include <ESP8266HTTPClient.h>
 #include <SoftwareSerial.h>
 
-#define RADIO_RX 16
-#define RADIO_TX 5
+#define PIN_RADIO_RX D8
+#define PIN_RADIO_TX D1
 
 #include "radio.h"
 
-const char *ssid =  "Hack the North";     // replace with your wifi ssid and wpa2 key
+const char *ssid = "Hack the North";     // replace with your wifi ssid and wpa2 key
 const char *pass =  "uwaterloo";
  
 void setup() 
 {
+  pinMode(D2, OUTPUT);
+  digitalWrite(D2, HIGH);
   Serial.begin(9600);
   while (!Serial); // Wait for serial connecion on USB
 
@@ -30,25 +32,18 @@ void setup()
   }
   Serial.println("");
   Serial.println("WiFi connection established");
-  pkt_initRadio();
 }
 
 int soundSum = 0;
 int soundSamples = 0;
 
+// Moving average to smooth sound values
+const int averageLength = 4;
+int pastSound[averageLength];
+int soundIndex = 0;
+
 void loop() {
-  pkt_update();
-  if (pkt_available()) {
-    Serial.println("available");
-    if (pkt_payloadType == SOUND) {
-      Sound sound = pkt_readSound();
-      Serial.println(sound.data.level);
-    }
-    else {
-      pkt_readPacket();
-    }
-  }
-  if (millis()%2000L == 0L){
+  if (millis()%500L == 0L){
     transmitSound();
     delay(10);
   }
@@ -61,9 +56,17 @@ void updateSound(){
 }
 
 void transmitSound(){
-  int sound = 10 * soundSum/soundSamples;
+  pastSound[soundIndex] =  10 * soundSum/soundSamples;
   soundSum = 0;
   soundSamples = 0;
+  // Moving average
+  soundIndex = (soundIndex + 1) % (averageLength - 1);
+  int sound = 0;
+  for (int i = 0; i < averageLength; i++){
+    sound += pastSound[i];
+  }
+  sound /= averageLength;
+  
   Serial.println(sound);
   HTTPClient http;
   http.begin("http://us-central1-cashew-2dd75.cloudfunctions.net/stationUpdate");
@@ -73,5 +76,5 @@ void transmitSound(){
 }
 
 String createJson(int id, int x, int y, int level, int sound, int lastUpdate) {
-  return "{ \"id\": " + String(id) + ", \"location\": { \"x\": " + String(x) + ", \"y\": " + String(y) + ", \"floor\": " + String(level) + " }, \"devices\": [ { \"mac_address\": 0, \"signal_strength\": 0 } ], \"sound_level\": " + String(sound) + ", \"last_updated\": " + String(lastUpdate) + " }";
+  return "{ \"id\": " + String(id) + ", \"location\": { \"x\": " + String(x) + ", \"y\": " + String(y) + ", \"floor\": " + String(level) + " }, \"devices\": [ { \"mac_address\": 0, \"signal_strength\": 0 } ], \"sound_level\": " + String(sound) + ", \"last_updated\":" + String(lastUpdate) + " }";
 }
