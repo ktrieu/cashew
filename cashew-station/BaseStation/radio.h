@@ -5,14 +5,7 @@
 #define PKT_BEGIN 02
 #define PKT_END 03
 
-#ifndef RADIO_RX
-	#define RADIO_RX 0
-#endif
-#ifndef RADIO_TX
-	#define RADIO_TX 1
-#endif
-
-SoftwareSerial pkt_radio(RADIO_RX, RADIO_TX);
+SoftwareSerial pkt_radio(PIN_RADIO_RX, PIN_RADIO_TX);
 
 void pkt_initRadio() {
   pkt_radio.begin(9600);
