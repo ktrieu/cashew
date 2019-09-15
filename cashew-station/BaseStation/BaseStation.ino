@@ -5,7 +5,10 @@
 #include <ESP8266HTTPClient.h>
 #include <SoftwareSerial.h>
 
-SoftwareSerial mySerial(0, 1); // RX, TX
+#define RADIO_RX 16
+#define RADIO_TX 5
+
+#include "radio.h"
 
 const char *ssid =  "Hack the North";     // replace with your wifi ssid and wpa2 key
 const char *pass =  "uwaterloo";
@@ -13,7 +16,7 @@ const char *pass =  "uwaterloo";
 void setup() 
 {
   Serial.begin(9600);
-  while (!Serial);
+  while (!Serial); // Wait for serial connecion on USB
 
   Serial.println("");
   Serial.print("Connecting to ");
@@ -27,26 +30,29 @@ void setup()
   }
   Serial.println("");
   Serial.println("WiFi connection established");
+  pkt_initRadio();
 }
 
 int soundSum = 0;
 int soundSamples = 0;
 
 void loop() {
+  pkt_update();
+  if (pkt_available()) {
+    Serial.println("available");
+    if (pkt_payloadType == SOUND) {
+      Sound sound = pkt_readSound();
+      Serial.println(sound.data.level);
+    }
+    else {
+      pkt_readPacket();
+    }
+  }
   if (millis()%2000L == 0L){
     transmitSound();
     delay(10);
   }
   updateSound();
-  /*
-  Serial.println(createJson(0, 0, 0, 0, 0, 0));
-  if (mySerial.available())
-    Serial.write(mySerial.read());
-  if (Serial.available())
-    mySerial.write(Serial.read());
-  
-  
-  //Serial.println(analogRead(A0));*/
 }
 
 void updateSound(){
